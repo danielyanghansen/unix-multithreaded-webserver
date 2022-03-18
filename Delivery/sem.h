@@ -6,7 +6,7 @@
 
 #define COUNT_DONE  10
 #define COUNT_HALT1  3
-#define COUNT_HALT2  6
+#define COUNT_HALT2  7
 
 /*
  * Semaphore implementation for the synchronization of POSIX threads.
@@ -21,7 +21,6 @@
  */
 typedef struct SEM{
     int count;
-    pthread_t thread;
 } SEM;
 
 /* Creates a new semaphore.
@@ -65,7 +64,7 @@ int sem_del(SEM *sem);
  *
  * sem           handle of the semaphore to decrement
  */
-void P(SEM sem);
+void *P(SEM sem);
 
 
 /* V (signal) operation.
@@ -77,6 +76,6 @@ void P(SEM sem);
  *
  * sem           handle of the semaphore to increment
  */
-void V(SEM sem); 
+void *V(SEM sem); 
 
 #endif

@@ -19,14 +19,14 @@
 
 
 //Useful Constants
-#define SERVER_PORT 8081 
+#define SERVER_PORT 8081
 
 #define TRUE 1
 #define FALSE 0
 
-#define MAXLINE 2048
+#define BUFSIZE 4096
 #define SA struct sockaddr
-
+#define PATH_MAX 512
 
 #define MAX_PENDING_CONNECTIONS 10
 

@@ -11,18 +11,27 @@ int parse(const char* line)
     /* Get the right amount of memory */
     char path[start_of_query - start_of_path];
     char query[end_of_query - start_of_query];
+    char method[start_of_path - &line[0]];
 
     /* Copy the strings into our memory */
     strncpy(path, start_of_path,  start_of_query - start_of_path);
     strncpy(query, start_of_query, end_of_query - start_of_query);
+    strncpy(method, &line[0], start_of_path-&line[0]);
 
     /* Null terminators (because strncpy does not provide them) */
     path[sizeof(path)] = 0;
     query[sizeof(query)] = 0;
+    method[sizeof(method)] = '\0'; 
 
     /*Print */
-    printf("%s\n", query, sizeof(query));
+    printf("Request: %s\n\n", line);
+
+    printf("Method: %s\n", method, (10));
+    printf("Sizeof method: %i\n", (int) sizeof(method));
     printf("%s\n", path, sizeof(path));
+    printf("%s\n", query, sizeof(query));
+
+    return 0; 
 }
 
 int main(void)
