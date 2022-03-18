@@ -1,5 +1,12 @@
 #ifndef SEM_H
 #define SEM_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+
+#define COUNT_DONE  10
+#define COUNT_HALT1  3
+#define COUNT_HALT2  6
 
 /*
  * Semaphore implementation for the synchronization of POSIX threads.
@@ -12,7 +19,10 @@
 /* Opaque type of a semaphore. 
  * ...you need to figure out the contents of struct SEM yourself!
  */
-typedef struct SEM SEM;
+typedef struct SEM{
+    int count;
+    pthread_t thread;
+} SEM;
 
 /* Creates a new semaphore.
  *
@@ -28,7 +38,6 @@ typedef struct SEM SEM;
  *
  * handle for the created semaphore, or NULL if an error occured.
  */
-
 SEM *sem_init(int initVal);
 
 /* Destroys a semaphore and frees all associated resources.
@@ -44,7 +53,6 @@ SEM *sem_init(int initVal);
  * In case of an error, not all resources may have been freed, but 
  * nevertheless the semaphore handle must not be used any more.
  */
-
 int sem_del(SEM *sem);
 
 /* P (wait) operation.
@@ -57,8 +65,8 @@ int sem_del(SEM *sem);
  *
  * sem           handle of the semaphore to decrement
  */
+void P(SEM sem);
 
-void P(SEM *sem);
 
 /* V (signal) operation.
  *
@@ -69,7 +77,6 @@ void P(SEM *sem);
  *
  * sem           handle of the semaphore to increment
  */
-
-void V(SEM *sem); 
+void V(SEM sem); 
 
 #endif

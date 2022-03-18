@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #define PORT 8080
-#define OTHER_PORT 8888
+#define OTHER_PORT 8081
 
 int main(int argc, char const *argv[])
 {
