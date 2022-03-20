@@ -4,32 +4,67 @@
 pthread_mutex_t count_mutex     = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t condition_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  condition_cond  = PTHREAD_COND_INITIALIZER;
-//int *threads;
-#define NUM_THREADS 10;
 
+int int_thread = NUM_THREADS;
 int num_threads = NUM_THREADS;
+int threads[NUM_THREADS];
 
+int next_thread() {
+    if (int_thread >= num_threads - 1 ) {
+        int_thread = 0;
+    } else {
+        int_thread++;
+    }
+    return int_thread;
+}
 
+/**
+ * @brief Is this necessary?
+ * 
+ */
+void mem_alloc() {
+    int* threads = (int *) malloc(10 * sizeof(int));
+}
 
-/*int sem_del(SEM *sem){
-    if(pthread_attr_destroy()==0){
+SEM *sem_init(int initVal){
+    Queue *q = ConstructQueue(NUM_THREADS);
+    SEM *sem = (SEM *){initVal, q};
+  /*  pthread_t newthread;
+    pthread_t newthread2;
+
+    if (!(threads[NUM_THREADS])) {
+        threads[NUM_THREADS];
+    }
+
+    //Thread one 
+    int one = next_thread();
+    int P_thread = pthread_create(&newthread, NULL, P(sem), NULL); 
+    threads[int_thread] = P_thread;
+    pthread_join(threads[one], NULL);
+    //Thread two
+    int two = next_thread();
+    int V_thread = pthread_create(&newthread2, NULL, V(sem), NULL); 
+    threads[int_thread] = V_thread;
+    pthread_join(threads[two], NULL);
+
+    //Attach/join threads
+*/
+    return sem; 
+}
+
+/*
+int sem_del(SEM *sem){
+    if(pthread_attr_destroy(SEM *sem)==0){
         return 0;
     }
     else {
         return -1;
     }
-}*/
-
-SEM *sem_init(int initVal){
-    SEM sem = (SEM){initVal};
-    pthread_t newthread;
-    int threads[0] = pthread_create(&newthread, NULL, P(sem), NULL); 
-    pthread_join(threads[0], NULL);
-
-    return &sem;
 }
+*/
+
 void *V(SEM sem){
-    for(;;)
+    while(1)
     {
        pthread_mutex_lock( &condition_mutex );
        if( sem.count < COUNT_HALT1 || sem.count > COUNT_HALT2 )
@@ -40,7 +75,7 @@ void *V(SEM sem){
 
        pthread_mutex_lock( &count_mutex );
        sem.count++;
-       printf("Counter value functionCount2: %d\n", sem.count);
+
        pthread_mutex_unlock( &count_mutex );
 
        if(sem.count >= COUNT_DONE) {
@@ -50,7 +85,7 @@ void *V(SEM sem){
 }
 
 void *P(SEM sem) {
-   for(;;)
+   while(1)
    {
       pthread_mutex_lock( &condition_mutex );
       while( sem.count >= COUNT_HALT1 && sem.count <= COUNT_HALT2 )
@@ -61,7 +96,7 @@ void *P(SEM sem) {
 
       pthread_mutex_lock( &count_mutex );
       sem.count++;
-      printf("Counter value functionCount1: %d\n",sem.count);
+
       pthread_mutex_unlock( &count_mutex );
 
       if(sem.count >= COUNT_DONE){ 

@@ -3,10 +3,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <stdarg.h>
+#include <sys/queue.h>
+#include "queue.h"
 
 #define COUNT_DONE  10
 #define COUNT_HALT1  3
 #define COUNT_HALT2  7
+#define NUM_THREADS 10
+
 
 /*
  * Semaphore implementation for the synchronization of POSIX threads.
@@ -21,6 +26,7 @@
  */
 typedef struct SEM{
     int count;
+    Queue *q_entries;
 } SEM;
 
 /* Creates a new semaphore.
@@ -31,7 +37,7 @@ typedef struct SEM{
  *
  * Parameters:
  *
- * initVal      the initial value of the semaphore
+ * @param initVal the initial value of the semaphore. This is the point where the SEM starts counting
  *
  * Returns:
  *
@@ -43,7 +49,7 @@ SEM *sem_init(int initVal);
  *
  * Parameters:
  *
- * sem           handle of the semaphore to destroy
+ * @param sem handle of the semaphore to destroy
  *
  * Returns:
  *
@@ -62,7 +68,7 @@ int sem_del(SEM *sem);
  *
  * Parameters:
  *
- * sem           handle of the semaphore to decrement
+ * @param sem handle of the semaphore to decrement
  */
 void *P(SEM sem);
 
@@ -74,7 +80,7 @@ void *P(SEM sem);
  *
  * Parameters:
  *
- * sem           handle of the semaphore to increment
+ * @param sem handle of the semaphore to increment
  */
 void *V(SEM sem); 
 

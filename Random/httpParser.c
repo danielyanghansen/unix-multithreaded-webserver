@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int parse(const char* line)
+int parse(const char* line) //Tried to implement this into the main server. Will try again later.
 {
     /* Find out where everything is */
     const char *start_of_path = strchr(line, ' ') + 1;

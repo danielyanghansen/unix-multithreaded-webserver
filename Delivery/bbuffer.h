@@ -1,6 +1,8 @@
 #ifndef ____BBUFFER___H___
 #define ____BBUFFER___H___
 
+#define SIZE_OF_BUFFER 10
+
 /*
  * Bounded Buffer implementation to manage int values that supports multiple 
  * readers and writers.
@@ -12,8 +14,11 @@
 /* Opaque type of a Bounded Buffer.
  * ...you need to figure out the contents of struct BNDBUF yourself
  */
-
-typedef struct BNDBUF BNDBUF;
+typedef struct BNDBUF { //Remember mutual exclusion during 1: Updating next_in and 2: Updating next_out
+    int value[SIZE_OF_BUFFER];  //Should be protected by a binary semaphore
+    int next_in; 
+    int next_out;
+} BNDBUF;   
 
 /* Creates a new Bounded Buffer. 
  *
@@ -22,15 +27,15 @@ typedef struct BNDBUF BNDBUF;
  * synchronization. If an error occurs during the initialization the 
  * implementation shall free all resources already allocated by then.
  *
+ * 
  * Parameters:
  *
- * size     The number of integers that can be stored in the bounded buffer.
+ * @param size The number of integers that can be stored in the bounded buffer.
  *
  * Returns:
  *
- * handle for the created bounded buffer, or NULL if an error occured.
+ * @returns bb - handle for the created bounded buffer, or NULL if an error occured.
  */
-
 BNDBUF *bb_init(unsigned int size);
 
 /* Destroys a Bounded Buffer. 
@@ -39,12 +44,11 @@ BNDBUF *bb_init(unsigned int size);
  *
  * Parameters:
  *
- * bb       Handle of the bounded buffer that shall be freed.
+ * @param bb Handle of the bounded buffer that shall be freed.
  */
-
 void bb_del(BNDBUF *bb);
 
-/* Retrieve an element from the bounded buffer.
+/* Retrieve an element from the bounded buffer. (Consumer consumes item)
  *
  * This function removes an element from the bounded buffer. If the bounded 
  * buffer is empty, the function blocks until an element is added to the 
@@ -52,16 +56,15 @@ void bb_del(BNDBUF *bb);
  *
  * Parameters:
  *
- * bb         Handle of the bounded buffer.
+ * @param bb Handle of the bounded buffer.
  *
  * Returns:
  *
- * the int element
+ * @returns the int element, or -1 if there was an error
  */
-
 int  bb_get(BNDBUF *bb);
 
-/* Add an element to the bounded buffer. 
+/* Add an element to the bounded buffer. (Producer produces item)
  *
  * This function adds an element to the bounded buffer. If the bounded 
  * buffer is full, the function blocks until an element is removed from 
@@ -69,14 +72,13 @@ int  bb_get(BNDBUF *bb);
  *
  * Parameters:
  *
- * bb     Handle of the bounded buffer.
- * fd     Value that shall be added to the buffer.
+ * @param bb Handle of the bounded buffer.
+ * @param fd Value that shall be added to the buffer.
  *
  * Returns:
  *
- * the int element
+ * @returns the int element, or -1 of there was an error
  */
-
-void bb_add(BNDBUF *bb, int fd);
+int bb_add(BNDBUF *bb, int fd);
 
 #endif
