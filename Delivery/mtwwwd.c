@@ -108,6 +108,8 @@ int main(int argc, char* argv, ...) {
         addr_size = sizeof(struct sockaddr_in);
 
         clientfd = accept(listenfd, (SA *) &cliaddr, (socklen_t*)&addr_size);
+        //TODO: Add to ring buffer
+        //TODO: Signal SEM on V
 
         if (clientfd == -1) {
             perror("Can't accept");
@@ -115,6 +117,8 @@ int main(int argc, char* argv, ...) {
         }
         printf("Found connection: %i \n", clientfd);
 
+
+        //TODO: Move to consumer threads
         handle_connection(clientfd);
     }
 

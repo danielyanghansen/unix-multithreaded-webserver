@@ -7,7 +7,7 @@
 #define NUM_THREADS 1000
 #define NUM_SIMULTANIOUS 423
 
-SEM *sem;
+SEM sem;
 
 char buf[BUFSIZ];
 
@@ -31,7 +31,8 @@ int main()
     srand(time(NULL));
 
     setvbuf(stdout, buf, _IOLBF, BUFSIZ);
-    sem = sem_init(NUM_SIMULTANIOUS);
+    const SEM *p_sem = sem_init(NUM_SIMULTANIOUS);
+    sem = *p_sem;
     pthread_t thread[NUM_THREADS];
 
     pthread_attr_t attr;
@@ -48,6 +49,6 @@ int main()
         printf("Return value %d: %ld\n", i, (long int) retval);
     }
     
-    sem_del(sem);
+    sem_del(&sem);
     return 0;
 }

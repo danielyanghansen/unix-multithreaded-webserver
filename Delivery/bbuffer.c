@@ -7,6 +7,7 @@ BNDBUF *bb_init(unsigned int size){
 
     return bbuff;
 }
+
 void bb_del(BNDBUF *bb) {  
 
 }

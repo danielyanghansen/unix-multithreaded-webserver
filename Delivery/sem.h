@@ -6,12 +6,16 @@
 #include <stdarg.h>
 #include <sys/queue.h>
 #include "queue.h"
+#include <errno.h>
 
+//COUNT NUMBERS WERE NOT PREDIFINED
 #define COUNT_DONE  10
 #define COUNT_HALT1  3
 #define COUNT_HALT2  7
-#define NUM_THREADS 10
+//Maybe drop counting and use a state machine instead
 
+#define NUM_THREADS 10
+#define NUM_SIMULTANIOUS 8
 
 /*
  * Semaphore implementation for the synchronization of POSIX threads.
@@ -26,7 +30,9 @@
  */
 typedef struct SEM{
     int count;
-    Queue *q_entries;
+    pthread_mutex_t condition_mutex;
+    pthread_cond_t condition_cond;
+    pthread_mutex_t count_mutex;
 } SEM;
 
 /* Creates a new semaphore.
@@ -70,7 +76,7 @@ int sem_del(SEM *sem);
  *
  * @param sem handle of the semaphore to decrement
  */
-void *P(SEM sem);
+void *P(SEM *sem);
 
 
 /* V (signal) operation.
@@ -82,6 +88,6 @@ void *P(SEM sem);
  *
  * @param sem handle of the semaphore to increment
  */
-void *V(SEM sem); 
+void *V(SEM *sem); 
 
 #endif
