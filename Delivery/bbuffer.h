@@ -1,7 +1,8 @@
 #ifndef ____BBUFFER___H___
 #define ____BBUFFER___H___
+#include <pthread.h>
 
-#define SIZE_OF_BUFFER 10
+//#define BUFSIZ 1000
 
 /*
  * Bounded Buffer implementation to manage int values that supports multiple 
@@ -15,9 +16,13 @@
  * ...you need to figure out the contents of struct BNDBUF yourself
  */
 typedef struct BNDBUF { //Remember mutual exclusion during 1: Updating next_in and 2: Updating next_out
-    int value[SIZE_OF_BUFFER];  //Should be protected by a binary semaphore
+    pthread_mutex_t buf_mutex;
+    int bufsiz;
+    int count;
     int next_in; 
     int next_out;
+    
+    int value[1];  //VERY IMPORTANT FOR THIS TO BE AT THE END, WHICH ALLOWS MALLOC TO GO OUT OF BOUNDS
 } BNDBUF;   
 
 /* Creates a new Bounded Buffer. 

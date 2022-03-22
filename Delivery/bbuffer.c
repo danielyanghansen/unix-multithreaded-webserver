@@ -1,44 +1,44 @@
 #include "bbuffer.h"
 
-
+//TODO: MUTEX PROTECTION
 
 BNDBUF *bb_init(unsigned int size){
-    BNDBUF *bbuff = (BNDBUF *) {size, 0 ,0};
+
+    //Malloc is often considered somewhat expensive. (Avoid additional/excess malloc)
+    BNDBUF *bbuff = (BNDBUF *) malloc(sizeof(BNDBUF) + sizeof(int) * (size -1));
+    //Because the int array value[] is at the end of the struct, all of the free space at the end of the malloc becomes the list
+    bbuff->next_in = 0;
+    bbuff->next_out = 0;
+    bbuff->count = 0;
+    bbuff->bufsiz = size;
+
+    for (int i = 0; i < bbuff->bufsiz; i++) {
+        bbuff->value[i] = -1;
+    }
+
+    pthread_mutex_init(&bbuff->buf_mutex, NULL);
 
     return bbuff;
 }
 
 void bb_del(BNDBUF *bb) {  
-
+    free(bb);
 }
 
 
 
-int  bb_get(BNDBUF *bb){ //is called by consumer. Returns -1 of the queue is empty
-    int a = 1; //assuming there's no value to call
-    //check if empty
-    for (int i = 0; i <= sizeof(bb->value) -1; i++) {
-        if (!(bb->value[i])) continue; //if spot is empty
-        else {
-            a = 0;
-            break;
-        }
-
-    }
+int bb_get(BNDBUF *bb){ //is called by consumer. Returns -1 of the queue is empty
     //returns -1 if the queue is empty
-    if (a || bb->value[bb->next_out] == (void *) 0) {
-        return -1;
-    }
-    int returnValue = bb->value[bb->next_out];
 
-    //remove returnValue from queue
-    bb->value[bb->next_out] = (void *) 0;
+    int returnValue = -1;
+    pthread_mutex_lock(&bb->buf_mutex);
+    if (bb->count > 0) {
+        bb->count--;
+        returnValue = bb->value[bb->next_out];
 
-    //increment queue in
-    if (bb->next_in >= sizeof(bb->value) -1 ) {
-        bb->next_in = 0;
+        bb->next_out = (bb->next_out +1) % bb->bufsiz; //wrap around
     }
-    else bb->next_in++;
+    pthread_mutex_unlock(&bb->buf_mutex);
 
     //return job
     return returnValue;
@@ -46,28 +46,24 @@ int  bb_get(BNDBUF *bb){ //is called by consumer. Returns -1 of the queue is emp
 }
 
 int bb_add(BNDBUF *bb, int fd) { //is called by producer. In our case, fd is the socket descriptor for the incoming request
-    int a = 1;  //assuming there's no empty spots
-    //check if the queue is full
-    for (int i = 0; i <= sizeof(bb->value) -1; i++) {
-        if (bb->value[i]) continue; //if spot is filled
-        else {
-            a = 0;
-            break;
-        }
-    }
-    //returns -1 if the queue is full
-    if (a || bb->value[bb->next_in]) {
-        return -1;
-    }
-       
-    //add fd (job) to queue spot.
-    bb->value[bb->next_in] = fd;
-    //increment bb->next_out
+        //returns -1 if the queue is full
 
-    if (bb->next_out >= sizeof(bb->value) -1 ) {
-        bb->next_out = 0;
-    }
-    else bb->next_out ++;
+    int returnValue = -1;
+    pthread_mutex_lock(&bb->buf_mutex);
 
-    return fd;
+    if (bb->count < bb->bufsiz) {
+        bb->count++;
+        bb->value[bb->next_in] = fd;
+        returnValue = fd;
+
+        bb->next_in = (bb->next_in +1) % bb->bufsiz; //wrap around
+    }    
+    pthread_mutex_unlock(&bb->buf_mutex);
+
+    //return file descriptor
+    return returnValue;
+}
+
+int main() {
+    return 0;
 }
