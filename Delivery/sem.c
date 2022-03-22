@@ -1,4 +1,5 @@
 #include "sem.h"
+#include <unistd.h>
  
 int run = 1;
 

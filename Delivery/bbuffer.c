@@ -36,6 +36,8 @@ int bb_get(BNDBUF *bb){ //is called by consumer. Returns -1 of the queue is empt
         bb->count--;
         returnValue = bb->value[bb->next_out];
 
+        bb->value[bb->next_out] = -1; //Reset
+
         bb->next_out = (bb->next_out +1) % bb->bufsiz; //wrap around
     }
     pthread_mutex_unlock(&bb->buf_mutex);
