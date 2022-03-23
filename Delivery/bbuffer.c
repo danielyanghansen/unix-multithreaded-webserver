@@ -1,7 +1,5 @@
 #include "bbuffer.h"
 
-//TODO: MUTEX PROTECTION
-
 BNDBUF *bb_init(unsigned int size){
 
     //Malloc is often considered somewhat expensive. (Avoid additional/excess malloc)
@@ -88,13 +86,18 @@ int main() {
 
         printf("Return value %i\n", bb_get(bndbuf));
     }
+
+    printf("Buffer field bufsiz: %d", bndbuf->bufsiz);
     bb_del(bndbuf);
+    /*
+    
     if (bb_get(bndbuf)) {
     printf("Exception happened here this works fine\n");
-  } else {
+    } else {
      printf("Ooopsie buffer still alive");
-  }
+    }
 
+    */
 
 
     return 0;

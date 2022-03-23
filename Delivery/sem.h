@@ -5,7 +5,6 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <sys/queue.h>
-#include "queue.h"
 #include <errno.h>
 
 //COUNT NUMBERS WERE NOT PREDIFINED
