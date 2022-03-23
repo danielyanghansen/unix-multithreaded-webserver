@@ -15,14 +15,14 @@ void *thread_work(void *arg)
 {
     // wait
     printf("Thread %ld wait\n", (long int) arg);
-    P(sem);
+    P(&sem);
     printf("Thread %ld run\n", (long int) arg);
 
     // critical section
     sleep(rand() % 5);
 
     // signal
-    V(sem);
+    V(&sem);
     return 0;
 }
 

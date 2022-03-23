@@ -112,9 +112,11 @@ int main(int argc, char* argv, ...) {
             perror("Can't accept");
             continue;
         }
-        //TODO: Add to ring buffer
-        
-        //TODO: Signal SEM on V
+
+        //produce:
+            //TODO: Add to ring buffer
+            
+            //TODO: Signal SEM on V
 
         printf("Found connection: %i \n", clientfd);
 

@@ -1,5 +1,10 @@
 {
     "files.associations": {
-        "server.h": "c"
+        "server.h": "c",
+        "*.tcc": "c",
+        "mutex": "c",
+        "ostream": "c",
+        "stop_token": "c",
+        "typeinfo": "c"
     }
 }

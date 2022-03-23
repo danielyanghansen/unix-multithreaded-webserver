@@ -7,14 +7,7 @@
 #include <sys/queue.h>
 #include <errno.h>
 
-//COUNT NUMBERS WERE NOT PREDIFINED
-#define COUNT_DONE  10
-#define COUNT_HALT1  3
-#define COUNT_HALT2  7
-//Maybe drop counting and use a state machine instead
-
 #define NUM_THREADS 10
-#define NUM_SIMULTANIOUS 8
 
 /*
  * Semaphore implementation for the synchronization of POSIX threads.

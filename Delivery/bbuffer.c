@@ -29,6 +29,8 @@ int bb_get(BNDBUF *bb){ //is called by consumer. Returns -1 of the queue is empt
     //returns -1 if the queue is empty
 
     int returnValue = -1;
+
+
     pthread_mutex_lock(&bb->buf_mutex);
     if (bb->count > 0) {
         bb->count--;
@@ -64,7 +66,7 @@ int bb_add(BNDBUF *bb, int fd) { //is called by producer. In our case, fd is the
     return returnValue;
 }
 
-int main() {
+/*int main() {
     printf("Starting buffer test\n");
     const BNDBUF *bndbuf = bb_init(5);
     printf("Buffer successfully created\n");
@@ -97,8 +99,9 @@ int main() {
      printf("Ooopsie buffer still alive");
     }
 
-    */
+   
 
 
     return 0;
 }
+ */
