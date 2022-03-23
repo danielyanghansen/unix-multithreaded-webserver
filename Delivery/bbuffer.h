@@ -2,7 +2,7 @@
 #define ____BBUFFER___H___
 #include <pthread.h>
 
-//#define BUFSIZ 1000
+#define BUFSIZ 256
 
 /*
  * Bounded Buffer implementation to manage int values that supports multiple 
