@@ -61,7 +61,7 @@ int main(int argc, char**argv) {
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = SERVER_PORT;
+    servaddr.sin_port = DEFAULT_SERVER_PORT;
 
     if ((bind(listenfd, (SA *) &servaddr, sizeof(servaddr))) < 0 ) {
         err_n_die("bind error");
@@ -76,7 +76,7 @@ int main(int argc, char**argv) {
         struct sockaddr_in addr;
         socklen_t addr_len;
 
-        printf("waiting for a connection on port %s\n", SERVER_PORT);
+        printf("waiting for a connection on port %s\n", DEFAULT_SERVER_PORT);
         fflush(stdout);
 
         connfd = accept(listenfd, (SA *) NULL, NULL);

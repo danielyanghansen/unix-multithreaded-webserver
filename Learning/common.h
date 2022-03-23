@@ -17,7 +17,7 @@
 #include <stddef.h>
 
 //Useful Constants
-#define SERVER_PORT 8081 
+#define DEFAULT_SERVER_PORT 8081 
 
 #define MAXLINE 2048
 #define SA struct sockaddr

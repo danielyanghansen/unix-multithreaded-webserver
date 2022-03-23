@@ -17,17 +17,12 @@
 #include <netinet/in.h>
 #include <stddef.h>
 
-
-//Useful Constants
-#define SERVER_PORT 8081
-
 #define TRUE 1
 #define FALSE 0
 
-#define BUFSIZE 4096
+#define BUFSIZE 4096 //how many bytes we send at a time
 #define SA struct sockaddr
-#define PATH_MAX 512
 
-#define MAX_PENDING_CONNECTIONS 10
+#define MAX_PENDING_CONNECTIONS 100
 
 #endif
