@@ -10,7 +10,6 @@ SEM *sem_init(int initVal){
     pthread_mutex_init(&sem->count_mutex, NULL);
     pthread_mutex_init(&sem->condition_mutex, NULL);
     pthread_cond_init(&sem->condition_cond,NULL);
-    printf("Sem Init:\ninitVal: %d or %d", initVal, sem->count);
 
     return sem;
 }

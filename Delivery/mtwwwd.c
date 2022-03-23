@@ -1,8 +1,11 @@
 #include "common.h"
 #include <string.h> //For using strlen
-//#include "sem.h"
-//#include "bbuffer.h"
+#include "sem.h"
+#include "sem.c"
+#include "bbuffer.h"
+#include "bbuffer.c"
 
+int running = 1;
 
 void handle_connection(int clientfd) {
 
@@ -67,9 +70,75 @@ void handle_connection(int clientfd) {
 
 }
 
+void *produce(char* argv[]) {
+    int addr_size;
+    struct sockaddr_in cliaddr;
+
+    int listenfd = argv[3]; //= ? Needs to be passed from main
+    while (*argv[2] == 1) {
+
+        printf("Waiting for connections...\n");
+
+        addr_size = sizeof(struct sockaddr_in);
+
+        int clientfd = accept(listenfd, (SA *) &cliaddr, (socklen_t*)&addr_size); //note: can return 0 as a valid entry
+        if (clientfd == -1) {
+            perror("Can't accept");
+            continue;
+        }
+        printf("Found connection: %i \n", clientfd);
+
+        //Try to put job on ringbuffer
+        int retval = bb_add(argv[1],clientfd); //return value is equal to the random input value on success
+        if (retval < 0){
+            printf("There was an error\n most likely because of a full buffer.\n Closing connection...\n");
+            close(clientfd);
+            continue;
+        } else {
+            printf("Value added : %d\n", retval);
+        }
+        void *res = V(argv[0]);
+        if (( void* )res != NULL) {
+            return res;
+        }
+    }
+    return NULL;
+}
+
+void *consume(char* argv[]) {
+    //while (run = 1)
+    printf("Thread ID: %d\n", pthread_self());
+    while (*argv[2] == 1) {
+
+        P(argv[0]);
+        int clientfd = bb_get(argv[1]);
+        if (clientfd < 0) {
+            printf("Couldn't fetch task from ringbuffer...\n");
+        }
+        else {
+            handle_connection(clientfd);
+        }
+    }
+
+}
+
+
 int main(int argc, char* argv, ...) {
-    int listenfd, clientfd, addr_size;
-    struct sockaddr_in servaddr, cliaddr;
+    int listenfd;
+    struct sockaddr_in servaddr;
+    int* running = malloc(sizeof(int));
+    memset(running, 1, sizeof(*running));
+
+    //CREATE SEM AND BUFFER
+
+    BNDBUF* bb = bb_init(BUFSIZ);
+    //TODO: ? add back orphaned issues into buffer
+
+    //Check current task count in buffer (expected to be 0)
+    int initialCount = bb->count;
+
+    SEM* sem = sem_init(initialCount);
+
 
 
     //set up socket and listen:
@@ -95,34 +164,37 @@ int main(int argc, char* argv, ...) {
         perror("listen error");
         exit(EXIT_FAILURE);
     }
-
     printf("Started listening on port %i...\n", SERVER_PORT);
 
-    //MAIN LOOP; ACCEPT AND HANDLE SOCKET CONNECTIONS
+    //Create threads
+    pthread_t consumers[NUM_THREADS];
+    pthread_t producer;
+    char* argvs[] = {sem, bb, running, listenfd};
 
-    while(1) {
-
-        printf("Waiting for connections...\n");
-        //struct sockaddr_in addr;
-
-        addr_size = sizeof(struct sockaddr_in);
-
-        clientfd = accept(listenfd, (SA *) &cliaddr, (socklen_t*)&addr_size); //note: can return 0 as a valid entry
-        if (clientfd == -1) {
-            perror("Can't accept");
-            continue;
-        }
-
-        //produce:
-            //TODO: Add to ring buffer
-            
-            //TODO: Signal SEM on V
-
-        printf("Found connection: %i \n", clientfd);
-
-
-        //TODO: Move to consumer threads
-        handle_connection(clientfd);
+    //Setup worker threads (will default into condition-wait)
+    for (int i = 0; i < NUM_THREADS; i++) {
+            pthread_create(&consumers[i], NULL, &consume, argvs);
     }
+    printf("Created %d worker threads.\n", NUM_THREADS);
+
+    pthread_create(&producer, NULL, &produce, argvs);
+    printf("Created producer thread\n");
+
+    while(*running) {
+
+    }
+
+    printf("Joining threads...\n");
+    void *retvalV = NULL;
+    int joinResV = pthread_join(producer, &retvalV);
+
+    for (int i = 0; i < NUM_THREADS; i++) {
+        void *retval = NULL;
+        int joinRes = pthread_join(consumers[i], &retval);
+        printf("Return value %d: %d\n", i, joinRes);
+    }
+    printf("Joined all threads\n");
+
+    return 0;
 
 }
