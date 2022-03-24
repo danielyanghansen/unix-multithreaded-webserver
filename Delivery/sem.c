@@ -15,7 +15,7 @@ SEM *sem_init(int initVal){
 }
 
 int sem_del(SEM *sem) {
-    //wait for count to reach 0?
+    //wait for count to reach 0 ? (Maybe some time far into the future)
     free(sem);
     return 0;
 }

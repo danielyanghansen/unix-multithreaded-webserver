@@ -7,7 +7,7 @@
 #include <sys/queue.h>
 #include <errno.h>
 
-#define NUM_THREADS 10
+#define NUM_THREADS 10 //remove
 
 /*
  * Semaphore implementation for the synchronization of POSIX threads.

@@ -20,6 +20,7 @@ void handle_connection(int clientfd) {
     int msgsize = 0;
     char additionalpath[ADDITIONAL_PATH_MAX + 1];
     char fullpath[MAXPATHSIZ + ADDITIONAL_PATH_MAX + 1];
+    char absolutepath[MAXPATHSIZ *2];
     int posEndBasePath = strlen(basePath);
 
     
@@ -28,6 +29,14 @@ void handle_connection(int clientfd) {
         while((bytes_read = read(clientfd, buffer+msgsize, sizeof(buffer)-msgsize-1)) > 0 ) {
             msgsize += bytes_read;
             if (msgsize < BUFSIZE -1 || buffer[msgsize-1] == '\n') break;
+        }
+        //cleanup
+        int size = strlen(buffer);
+        if (buffer[size-1] == '\n' || buffer[size-1] == '\r') {
+            buffer[size-1] = '\0';
+        }
+        if (buffer[size-2] == '\n' || buffer[size-2] == '\r') {
+            buffer[size-2] = '\0';
         }
     pthread_mutex_unlock(&buffer_mutex);
 
@@ -43,45 +52,44 @@ void handle_connection(int clientfd) {
     //Get the first token
     token = strtok(buffer, s);
 
-    //walk through the other tokens
-    
     char method[32] = {'\0'};
+    char path[MAXPATHSIZ + ADDITIONAL_PATH_MAX + 1] = {'\0'};
+    char HTTPver[64] = {'\0'};
+    //walk through the other tokens
+    if (token != NULL) {
     strcpy(&method, token);
     token = strtok(NULL, s);
 
-    char path[MAXPATHSIZ + ADDITIONAL_PATH_MAX + 1] = {'\0'};
-    strcpy(&path, token);
-    token = strtok(NULL, s);
+        if (token !=NULL ) {
+            strcpy(&path, token);
+            token = strtok(NULL, s);
 
-    char HTTPver[64] = {'\0'};
-    strcpy(&HTTPver, token);
-    token = strtok(NULL, s);
+            if (token != NULL) {
+                strcpy(&HTTPver, token);
+                token = strtok(NULL, s);
 
-    while( token != NULL ) {
-      printf( "Additional unlogged header:\n    %s\n", token );
-    
-      token = strtok(NULL, s);
-   }
-
-    /* Get the right amount of memory */
-    /*char path[end_of_path - start_of_path ];
-    char HTTPver[&buffer[strlen(buffer) -1 ]- (end_of_path +1 )];
-    */
-
-    /* Copy the strings into our memory */
-    /*
-    strncpy(path, start_of_path,  end_of_path - start_of_path);
-    strncpy(method, &buffer[0], start_of_path-&buffer[0]-1);
-    strncpy(HTTPver, end_of_path+2, &buffer[strlen(buffer) -1]- (end_of_path + 2));
-    */
-    /* Null terminators (because strncpy does not provide them) */
+                while( token != NULL ) {
+                    printf( "Additional unlogged header:\n    %s\n", token );
+                    token = strtok(NULL, s);
+                }
+            }
+            
+        }else {
+            printf("Couldn't identify path\n");
+            close(clientfd);
+            return;
+        }
+    } else {printf("Couldn't identify HTTP Method\n");
+        close(clientfd);
+        return;
+    }
 
     printf("Method: %s\n", method);
-    printf("Sizeof method: %i\n", (int) sizeof(method));
+    printf("Sizeof method: %i\n", (int) strlen(method));
     printf("HTTPVer: %s\n", HTTPver);
-    printf("Sizeof HTTPver: %i\n", (int) sizeof(HTTPver));
+    printf("Sizeof HTTPver: %i\n", (int) strlen(HTTPver));
 
-    //8===========================================================D
+    //===========================================================
 
     strcat(additionalpath, path); //FOR TESTING
     buffer[msgsize-1] = 0; //null terminate message and remove linebreak
@@ -90,19 +98,6 @@ void handle_connection(int clientfd) {
     fflush(stdout);
     
 
-    char line[sizeof(buffer)];
-    strncpy(line, buffer[0], buffer[sizeof(buffer)-1]);
-    printf("%s", line);
-
-    //cleanup
-    int size = strlen(buffer);
-    if (buffer[size-1] == '\n' || buffer[size-1] == '\r') {
-        buffer[size-1] = '\0';
-    }
-    if (buffer[size-2] == '\n' || buffer[size-2] == '\r') {
-        buffer[size-2] = '\0';
-    }
-
 
     strcat(fullpath, basePath);
     printf("Full Path after first cat: %s\n", fullpath);
@@ -110,18 +105,18 @@ void handle_connection(int clientfd) {
     printf("Full Path after second cat: %s\n", fullpath);
 
     //check valid path (if the path length is short enough)
-    if (realpath(fullpath, fullpath) == NULL) {
-        printf("ERROR(bad fullpath): %s\n", additionalpath);
+    if (realpath(fullpath, absolutepath) == NULL) {
+        printf("ERROR(bad path): %s\n", additionalpath);
         close(clientfd);    
         return;
     }
-    printf("Full Path after cat: %s\n", fullpath);
+    printf("Absolute path (from home): %s\n", absolutepath);
     
     //read file and send contents to client
     pthread_mutex_lock(&file_access_mutex);
-        FILE *fp = fopen(fullpath, "r");
+        FILE *fp = fopen(absolutepath, "r");
         if (fp == NULL) {
-            printf("ERROR(bad path): %s\n", buffer);
+            printf("ERROR(bad path): %s\n", absolutepath);
             close(clientfd);
             pthread_mutex_unlock(&file_access_mutex);
             return;
@@ -148,7 +143,7 @@ void *produce(char* thread_args[]) {
     int addr_size;
     struct sockaddr_in cliaddr;
 
-    int listenfd = thread_args[3]; //= ? Needs to be passed from main
+    int listenfd = thread_args[3]; //= ? Needs to be passed from main 
     while (*thread_args[2] == 1) {
 
         printf("Waiting for connections...\n");
@@ -180,9 +175,9 @@ void *produce(char* thread_args[]) {
 }
 
 void *consume(char* thread_args[]) {
-    //while (run = 1)
     printf("Thread ID: %d\n", pthread_self());
-    while (*thread_args[2] == 1) {
+     
+    while (*thread_args[2] == 1) { //equivalent to: while (run = 1) {...}
 
         P(thread_args[0]);
         int clientfd = bb_get(thread_args[1]);
