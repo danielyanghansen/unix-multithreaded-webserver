@@ -1,18 +1,18 @@
 # What to run
 
 ## Running the webserver
-Navigate to the directory containing mtwwwwd.c and compile it
+Navigate to the directory containing mtwwwd.c and compile it
 ```
 gcc mtwwwd.c -o server -lpthread
 ```
 The `-lpthread` argument isn't always necessary, but it's a good safety measure so that the linker can actually find the symbols necessary for `pthread.h` in the pthread library during the linking \
 
 Once the program is compiled, start the server and provide path, port, threadcount, and buffersize
-```
+```bash
 ./server www-path port #threads #bufferslots
 ```
 Example way of running the server:
-```
+```bash
 ./server ./doc 8080 16 128
 ```
 
@@ -22,7 +22,7 @@ Example way of running the server:
 Since the server is running HTTP/0.9, using a browser does not work, as the browser expects a HTTP/1.1 response.
 `telnet` can be used instead then.
 Assuming the server is running on port 8080, you can establish a keep-alive connection to the server:
-```
+```bash
 telnet localhost 8080
 ``` 
 Request a file on the format `<HTTPMETHOD> <PATH>`:
@@ -32,7 +32,7 @@ GET /index.html
 Note: All extra headers will be ignored.
 #### wget
 You can also attempt to download one of the files using `wget`, but be aware that it will try reconnect endlessly until you force exit if you specify a wrong path.
-```
+```bash
 wget localhost:8080/index.html
 ```
 
