@@ -5,8 +5,8 @@
 #include "bbuffer.h"
 #include "bbuffer.c"
 
-pthread_mutex_t buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t file_access_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t file_access_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define MAXPATHSIZ 1000
 #define ADDITIONAL_PATH_MAX 512
@@ -48,53 +48,56 @@ void handle_connection(int clientfd) {
 
     const char s[2] = {' '};
     char* token;
+    char* reststring = buffer;
 
     //Get the first token
-    token = strtok(buffer, s);
+    token = strtok_r(reststring, s, &reststring);
 
     char method[32] = {'\0'};
     char path[MAXPATHSIZ + ADDITIONAL_PATH_MAX + 1] = {'\0'};
     char HTTPver[64] = {'\0'};
     //walk through the other tokens
     if (token != NULL) {
-    strcpy(&method, token);
-    token = strtok(NULL, s);
+        strcpy(&method, token);
+        token = strtok_r(reststring, s, &reststring);
+        printf("Method: %s\n", method);
+        printf("Sizeof method: %i\n", (int) strlen(method));
 
-        if (token !=NULL ) {
-            strcpy(&path, token);
-            token = strtok(NULL, s);
+            if (token !=NULL ) {
+                strcpy(&path, token);
+                token = strtok_r(reststring, s, &reststring);
+                printf("Path: %s\n", path);
 
-            if (token != NULL) {
-                strcpy(&HTTPver, token);
-                token = strtok(NULL, s);
+                if (token != NULL) {
+                    strcpy(&HTTPver, token);
+                    printf("HTTPVer: %s\n", HTTPver);
+                    printf("Sizeof HTTPver: %i\n", (int) strlen(HTTPver));
 
-                while( token != NULL ) {
-                    printf( "Additional unlogged header:\n    %s\n", token );
-                    token = strtok(NULL, s);
+                    //token = strtok_r(reststring, s, &reststring);
+                    /*while( token != NULL ) {
+                        printf( "Additional unlogged header:\n    %s\n", token );
+                        strtok_r(reststring, s, &reststring);
+                    }*/
+                } else {
+                    printf("No additional headers\n");
                 }
+                
+            }else {
+                printf("Couldn't identify path\n");
+                close(clientfd);
+                return;
             }
-            
-        }else {
-            printf("Couldn't identify path\n");
+        } else {printf("Couldn't identify HTTP Method\n");
             close(clientfd);
             return;
-        }
-    } else {printf("Couldn't identify HTTP Method\n");
-        close(clientfd);
-        return;
     }
 
-    printf("Method: %s\n", method);
-    printf("Sizeof method: %i\n", (int) strlen(method));
-    printf("HTTPVer: %s\n", HTTPver);
-    printf("Sizeof HTTPver: %i\n", (int) strlen(HTTPver));
 
     //===========================================================
 
     strcat(additionalpath, path); //FOR TESTING
     buffer[msgsize-1] = 0; //null terminate message and remove linebreak
 
-    printf("REQUEST: %s\n", buffer); //The full request is in the buffer
     fflush(stdout);
     
 
@@ -116,25 +119,24 @@ void handle_connection(int clientfd) {
     pthread_mutex_lock(&file_access_mutex);
         FILE *fp = fopen(absolutepath, "r");
         if (fp == NULL) {
+            pthread_mutex_unlock(&file_access_mutex);
             printf("ERROR(bad path): %s\n", absolutepath);
             close(clientfd);
-            pthread_mutex_unlock(&file_access_mutex);
             return;
         }
 
-        pthread_mutex_lock(&buffer);
+        char bufferOut[BUFSIZ];
             //send file contents
-            while ((bytes_read = fread(buffer, 1, BUFSIZE, fp)) > 0 ) {
+            while ((bytes_read = fread(bufferOut, 1, BUFSIZE, fp)) > 0 ) {
                 printf("sending %zu bytes\n", bytes_read);
-                write(clientfd, buffer, bytes_read);
+                write(clientfd, bufferOut, bytes_read);
             }
-        pthread_mutex_unlock(&buffer);
 
+    fclose(fp);
     pthread_mutex_unlock(&file_access_mutex);
 
     //close connection
     close(clientfd);
-    fclose(fp);
     printf("closing connection...\n");
 
 }
@@ -199,7 +201,6 @@ int main(int argc, char **argv) {
         printf("Needs 4 arguments: www-path port #threads #bufferslots\n");
         return 0;
     }
-
     char* www_path[MAXPATHSIZ -1] = {'\0'};
     strcpy(&www_path, argv[1]);
     strcpy(&basePath, argv[1]);
@@ -215,6 +216,9 @@ int main(int argc, char **argv) {
     memset(running, 1, sizeof(*running));
 
     printf("Attempting to set up server:\n    path: %s\n    port: %d\n    threadcount: %d\n    buffersize: %d\n", www_path, port, threadsnr, bufferslots);
+
+    //pthread_mutex_init(&buffer_mutex, NULL);
+    //pthread_mutex_init(&file_access_mutex, NULL);
 
 
     BNDBUF* bb = bb_init(bufferslots);
