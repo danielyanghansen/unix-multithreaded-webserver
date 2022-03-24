@@ -49,7 +49,8 @@ This is a short testing script to confirm that the ring buffer returns correct v
 A test using both the Semaphore and the Ring buffer. This is also a "visual test" in the terminal that runs until forcefully cancelled. After a consumer thread has removed a task from the ring buffer, or the producer thread has added a task to it, the respective thread will sleep for a few seconds to simulate working. For correct buffer size testing, the consumer threads sleep significantly longer than the lone producer thread. Compile `sembufferintegrationtest.c` to be able to run the test.
 
 
-### e) Extra Credit:
+
+# e) Extra Credit:
 As explained by the task e infotext, the webserver in its current state has security issues as the requesting client freely set the path to file they want to retrieve. This creates a security breach as a user can exit the subdirectory that contains
 the files that are intended to be public and therefore perform a Local File Intrusion (LFI) attack, and access all files that the running process has access to . The intruder is limited to read-access, but this is still very harmful as the intruder can access sensitive info such as password, hashes, or private keys (like an ssh-rsa key).
 
@@ -60,4 +61,26 @@ gives them the ability to exit the current directory (“./doc”). If the serve
 function uses two inputs; the pathname and a mode which specifies the permission case . In mode you
 can restrict which directories the path has access to. If the pathname were to breach the
 mode restrictions the function returns -1 and the program can stop the client from continuing until they
-give an allowed path. 
+give an allowed path.
+
+# A few notes
+
+## Avoiding consumer thread race condition deadlock
+Although the chance is small, it is technically possible for the consumer threads to arrive in a collective deadlock IFF the ring buffer is full AND all the consumer threads are waiting on the (same) condition signal.
+To fix this, all threads wake up after 60 seconds of no signal to recheck the SEM counter value.
+
+## Other "Nice to Have", unimplemented features
+(This section also includes how we have facilitated the possibility of these potential implementations)
+
+### Proper server shutdown.
+Currently, the server runs until forcefully stopped by sending the interrupt SIGINT (using `^C` / Ctrl+C). Because the current implementation has an empty `while(1) {}` loop, the main thread stays alive, which is necessary as it allows the interrupt SIGINT to propogate to the generated child threads and cause a (somewhat) proper shutdown that frees resources. \
+However, it would be better to be able to send a custom shutdown signal, which causes the server to:
+- stop all new incoming requests
+- log all unresolved requests
+- shut down (and maybe complete) all currently processing requests
+- properly perform garbage collection and free resources using our methods `sem_del(SEM* sem)` and `bb_del(BNDBUF *bb)`\
+
+A small step to facilitate this has been done by letting most thread functions run in a `while(\*running) {}` loop. `running` is set to be 1 true at the beginning of the program, but the main thread has the possibility to set this to 0 if implemented correctly. This would cause the producer thread to stop taking new requests, and cause all consumer threads to stop queueing up for new tasks to consume. It would however not properly join/exit any of the threads sleeping/waiting for a signal, as the `running` variable does not curruntly propogate to the internal SEM functions.
+
+### HTTP/1.1
+The server is currently only answering in HTTP/0.9, which means the response cannot be accessed in a browser. Because we allow sending arbitrarily large files in packets of 4096 bytes at a time in a direct stream, there's currently no implementation of a method that checks the total bytesize of the file content before the file is sent. Hence, we have no way of declaring filesize in the header.\
